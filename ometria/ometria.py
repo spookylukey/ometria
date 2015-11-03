@@ -80,7 +80,7 @@ class Resource(object):
             # /products/1234
             client.products(1234)
         """
-        if id == None:
+        if id is None:
             return self
 
         self.id = str(id)
@@ -148,7 +148,7 @@ class Resource(object):
 
         params["nonce"] = int(time.time() * 1000)
 
-        url =  self.client.base_url + self.path + "?" +  urlencode(params)
+        url = self.client.base_url + self.path + "?" + urlencode(params)
 
         if data is None:
             data = {}
