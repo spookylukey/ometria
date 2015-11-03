@@ -146,20 +146,31 @@ class Resource(object):
         if params is None:
             params = {}
 
-        params["nonce"] = int(time.time() * 1000)
+        if self.version == "1":
+            params["nonce"] = int(time.time() * 1000)
 
-        url = self.client.base_url + self.path + "?" + urlencode(params)
+        url = self.client.base_url + self.path + ("?" + urlencode(params) if params else '')
 
         if data is None:
             data = {}
 
         data = json.dumps(data)
 
-        sig = b64encode(HMAC(self.client.secret, url + data, sha256).hexdigest())
+        headers = {
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+        }
 
-        response = requests.request(method, url, data=data, headers={
-            "Auth-Signature": sig, "Auth-API-Key": self.client.key,
-            "Accept": "application/json", "Content-Type": "application/json"})
+        if self.client.version == "1":
+            sig = b64encode(HMAC(self.client.secret, url + data, sha256).hexdigest())
+            headers.update({
+                "Auth-Signature": sig,
+                "Auth-API-Key": self.client.key,
+            })
+        else:
+            headers['X-Ometria-Auth'] = self.client.key
+
+        response = requests.request(method, url, data=data, headers=headers)
 
         return self._handle_response(response)
 
@@ -187,8 +198,14 @@ class Client(object):
 
         >>> c = Client(key="...", secret="...")
         >>> c.customers(1234).orders.get()
+
+    Or for version 2:
+
+        >>> c = Client(key="...", version="2")
+        >>> c.orders(1234).get()
+
     """
-    def __init__(self, key, secret, version="1"):
+    def __init__(self, key=None, secret=None, version="1"):
         self.key = key
         self.secret = secret
         self.version = version
