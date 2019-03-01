@@ -5,7 +5,7 @@ from base64 import b64encode
 from hmac import HMAC
 from hashlib import sha256
 import json
-from urllib import urlencode
+from urllib.parse import urlencode
 import time
 
 import requests
